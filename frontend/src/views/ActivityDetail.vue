@@ -68,8 +68,12 @@
                 </svg>
                 <div>
                   <div class="text-sm text-gray-500">参与人数</div>
-                  <div class="font-medium">
-                    {{ activity.currentParticipants || 0 }} / {{ activity.maxParticipants }} 人
+                  <div class="font-medium" :class="isFull ? 'text-red-600' : ''">
+                    {{ activity.currentParticipants || 0 }} / {{ activity.maxParticipants || 0 }} 人
+                    <span v-if="isFull" class="ml-2 text-red-600 text-sm font-medium">(已满)</span>
+                    <span v-else-if="remainingSpots > 0 && remainingSpots <= 5" class="ml-2 text-orange-500 text-sm font-medium">
+                      (仅剩 {{ remainingSpots }} 个名额)
+                    </span>
                   </div>
                 </div>
               </div>
@@ -79,7 +83,7 @@
                 <div class="w-full bg-gray-200 rounded-full h-3">
                   <div 
                     class="h-3 rounded-full transition-all"
-                    :class="isFull ? 'bg-red-500' : 'bg-primary'"
+                    :class="progressColor"
                     :style="{ width: progressPercentage + '%' }"
                   ></div>
                 </div>
@@ -106,15 +110,26 @@
           </button>
           
           <button
-            v-if="activity.status === 'UPCOMING' && !isFull"
+            v-if="canRegister && !isFull && activity.maxParticipants"
             @click="showRegisterForm = true"
             class="px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium shadow-md hover:shadow-lg"
           >
             立即报名
+            <span v-if="remainingSpots > 0 && remainingSpots <= 5" class="ml-2 text-yellow-200 text-sm">
+              (仅剩{{ remainingSpots }}名)
+            </span>
           </button>
           
           <span v-else-if="isFull" class="text-red-600 font-medium">
             活动已满员
+          </span>
+          
+          <span v-else-if="activity.status === 'COMPLETED'" class="text-gray-500 font-medium">
+            活动已结束
+          </span>
+          
+          <span v-else-if="activity.status === 'CANCELLED'" class="text-red-600 font-medium">
+            活动已取消
           </span>
         </div>
       </div>
@@ -171,12 +186,30 @@ const showRegisterForm = ref(false)
 const registerForm = ref({ userId: '' })
 
 const isFull = computed(() => {
-  return activity.value && activity.value.currentParticipants >= activity.value.maxParticipants
+  if (!activity.value || !activity.value.maxParticipants) return false
+  return (activity.value.currentParticipants || 0) >= activity.value.maxParticipants
+})
+
+const remainingSpots = computed(() => {
+  if (!activity.value || !activity.value.maxParticipants) return 0
+  return activity.value.maxParticipants - (activity.value.currentParticipants || 0)
 })
 
 const progressPercentage = computed(() => {
-  if (!activity.value) return 0
-  return (activity.value.currentParticipants / activity.value.maxParticipants) * 100
+  if (!activity.value || !activity.value.maxParticipants) return 0
+  if (activity.value.maxParticipants === 0) return 0
+  return Math.min(((activity.value.currentParticipants || 0) / activity.value.maxParticipants) * 100, 100)
+})
+
+const progressColor = computed(() => {
+  if (isFull.value) return 'bg-red-500'
+  if (progressPercentage.value >= 80) return 'bg-orange-500'
+  return 'bg-primary'
+})
+
+const canRegister = computed(() => {
+  if (!activity.value) return false
+  return activity.value.status === 'UPCOMING' || activity.value.status === 'ONGOING'
 })
 
 const fetchActivity = async () => {

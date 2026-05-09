@@ -35,6 +35,15 @@ public class ActivityService {
     @Transactional
     public Activity createActivity(Activity activity) {
         log.info("Creating new activity: {}", activity.getTitle());
+        
+        if (activity.getMaxParticipants() == null || activity.getMaxParticipants() < 1) {
+            throw new RuntimeException("最大参与人数必须大于0");
+        }
+        
+        if (activity.getCurrentParticipants() == null) {
+            activity.setCurrentParticipants(0);
+        }
+        
         return activityRepository.save(activity);
     }
     
@@ -44,12 +53,23 @@ public class ActivityService {
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Activity not found with id: " + id));
         
+        if (activityDetails.getMaxParticipants() != null && activityDetails.getMaxParticipants() < 1) {
+            throw new RuntimeException("最大参与人数必须大于0");
+        }
+        
+        if (activityDetails.getMaxParticipants() != null && 
+            activityDetails.getMaxParticipants() < activity.getCurrentParticipants()) {
+            throw new RuntimeException("最大参与人数不能小于当前已报名人数");
+        }
+        
         activity.setTitle(activityDetails.getTitle());
         activity.setDescription(activityDetails.getDescription());
         activity.setLocation(activityDetails.getLocation());
         activity.setStartTime(activityDetails.getStartTime());
         activity.setEndTime(activityDetails.getEndTime());
-        activity.setMaxParticipants(activityDetails.getMaxParticipants());
+        if (activityDetails.getMaxParticipants() != null) {
+            activity.setMaxParticipants(activityDetails.getMaxParticipants());
+        }
         activity.setStatus(activityDetails.getStatus());
         
         return activityRepository.save(activity);

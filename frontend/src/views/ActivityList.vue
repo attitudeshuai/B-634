@@ -65,7 +65,19 @@
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              {{ activity.currentParticipants || 0 }} / {{ activity.maxParticipants }} 人
+              {{ activity.currentParticipants || 0 }} / {{ activity.maxParticipants || 0 }} 人
+              <span 
+                v-if="activity.maxParticipants && (activity.currentParticipants || 0) >= activity.maxParticipants" 
+                class="ml-2 text-red-500 text-xs font-medium"
+              >
+                已满
+              </span>
+              <span 
+                v-else-if="activity.maxParticipants && activity.maxParticipants - (activity.currentParticipants || 0) <= 5 && activity.maxParticipants - (activity.currentParticipants || 0) > 0" 
+                class="ml-2 text-orange-500 text-xs font-medium"
+              >
+                仅剩{{ activity.maxParticipants - (activity.currentParticipants || 0) }}名
+              </span>
             </div>
           </div>
         </div>
@@ -73,8 +85,8 @@
         <div class="bg-gray-50 px-6 py-3 border-t border-gray-100">
           <div class="flex items-center justify-between">
             <span class="text-sm text-gray-500">
-              <span :class="activity.currentParticipants >= activity.maxParticipants ? 'text-red-500 font-medium' : 'text-primary'">
-                {{ activity.currentParticipants >= activity.maxParticipants ? '已满员' : '还有空位' }}
+              <span :class="isActivityFull(activity) ? 'text-red-500 font-medium' : 'text-primary'">
+                {{ isActivityFull(activity) ? '已满员' : '还有空位' }}
               </span>
             </span>
             <span class="text-primary text-sm font-medium hover:text-primary-dark">
@@ -172,6 +184,11 @@ const getStatusColor = (activity) => {
     CANCELLED: 'bg-red-100 text-red-700'
   }
   return map[status] || 'bg-gray-100 text-gray-700'
+}
+
+const isActivityFull = (activity) => {
+  if (!activity || !activity.maxParticipants) return false
+  return (activity.currentParticipants || 0) >= activity.maxParticipants
 }
 
 watch(currentTab, fetchActivities)

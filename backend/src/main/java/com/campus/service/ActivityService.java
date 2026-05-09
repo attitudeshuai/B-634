@@ -44,6 +44,11 @@ public class ActivityService {
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Activity not found with id: " + id));
         
+        if (activityDetails.getMaxParticipants() != null
+                && activityDetails.getMaxParticipants() < activity.getCurrentParticipants()) {
+            throw new RuntimeException("最大参与人数不能小于已报名人数 (" + activity.getCurrentParticipants() + " 人)");
+        }
+        
         activity.setTitle(activityDetails.getTitle());
         activity.setDescription(activityDetails.getDescription());
         activity.setLocation(activityDetails.getLocation());

@@ -39,7 +39,7 @@
               <td class="px-6 py-4 text-gray-600 text-sm">{{ formatDate(activity.startTime) }}</td>
               <td class="px-6 py-4 text-center">
                 <span class="text-gray-900 font-medium">{{ activity.currentParticipants || 0 }}</span>
-                <span class="text-gray-500"> / {{ activity.maxParticipants }}</span>
+                <span class="text-gray-500"> / {{ activity.maxParticipants || 0 }}</span>
               </td>
               <td class="px-6 py-4 text-center">
                 <span 
@@ -237,7 +237,7 @@ const validateForm = () => {
   if (!newActivity.value.location) return '请输入活动地点'
   if (!newActivity.value.startTime) return '请选择开始时间'
   if (!newActivity.value.endTime) return '请选择结束时间'
-  if (!newActivity.value.maxParticipants) return '请输入最大参与人数'
+  if (!newActivity.value.maxParticipants || newActivity.value.maxParticipants < 1) return '最大参与人数至少为1'
   return null
 }
 

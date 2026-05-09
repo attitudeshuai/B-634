@@ -38,8 +38,16 @@
               <td class="px-6 py-4 text-gray-600">{{ activity.location }}</td>
               <td class="px-6 py-4 text-gray-600 text-sm">{{ formatDate(activity.startTime) }}</td>
               <td class="px-6 py-4 text-center">
-                <span class="text-gray-900 font-medium">{{ activity.currentParticipants || 0 }}</span>
-                <span class="text-gray-500"> / {{ activity.maxParticipants }}</span>
+                <span class="font-medium" :class="activity.currentParticipants >= activity.maxParticipants ? 'text-red-600' : 'text-gray-900'">
+                  {{ activity.currentParticipants || 0 }}
+                </span>
+                <span class="text-gray-500"> / {{ activity.maxParticipants || 0 }}</span>
+                <span 
+                  v-if="activity.maxParticipants && activity.currentParticipants >= activity.maxParticipants" 
+                  class="ml-2 inline-block px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium"
+                >
+                  已满
+                </span>
               </td>
               <td class="px-6 py-4 text-center">
                 <span 
@@ -139,9 +147,15 @@
               v-model.number="newActivity.maxParticipants"
               type="number"
               min="1"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              :class="[
+                'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors',
+                newActivity.maxParticipants < 1 && newActivity.maxParticipants !== null ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              ]"
               placeholder="请输入最大参与人数"
             />
+            <p v-if="newActivity.maxParticipants < 1 && newActivity.maxParticipants !== null" class="mt-1 text-sm text-red-500">
+              最大参与人数必须大于0
+            </p>
           </div>
         </div>
         
@@ -154,7 +168,8 @@
           </button>
           <button
             @click="handleCreate"
-            class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+            :disabled="newActivity.maxParticipants < 1"
+            class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             创建活动
           </button>
@@ -238,6 +253,7 @@ const validateForm = () => {
   if (!newActivity.value.startTime) return '请选择开始时间'
   if (!newActivity.value.endTime) return '请选择结束时间'
   if (!newActivity.value.maxParticipants) return '请输入最大参与人数'
+  if (newActivity.value.maxParticipants < 1) return '最大参与人数必须大于0'
   return null
 }
 

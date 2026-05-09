@@ -61,6 +61,14 @@ public class RegistrationService {
         Activity activity = activityRepository.findById(activityId)
             .orElseThrow(() -> new RuntimeException("活动未找到: " + activityId));
         
+        // Check activity status
+        if (activity.getStatus() == Activity.ActivityStatus.COMPLETED) {
+            throw new RuntimeException("该活动已结束，无法报名");
+        }
+        if (activity.getStatus() == Activity.ActivityStatus.CANCELLED) {
+            throw new RuntimeException("该活动已取消，无法报名");
+        }
+        
         // Check if activity is full
         long currentCount = registrationRepository.countByActivityIdAndStatus(activityId, RegistrationStatus.ACTIVE);
         if (currentCount >= activity.getMaxParticipants()) {

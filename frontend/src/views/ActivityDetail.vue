@@ -67,9 +67,9 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
                 <div>
-                  <div class="text-sm text-gray-500">参与人数</div>
+                  <div class="text-sm text-gray-500">报名人数</div>
                   <div class="font-medium">
-                    {{ activity.currentParticipants || 0 }} / {{ activity.maxParticipants }} 人
+                    {{ activity.currentParticipants || 0 }} / {{ activity.maxParticipants || 0 }} 人
                   </div>
                 </div>
               </div>
@@ -106,7 +106,7 @@
           </button>
           
           <button
-            v-if="activity.status === 'UPCOMING' && !isFull"
+            v-if="canRegister"
             @click="showRegisterForm = true"
             class="px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium shadow-md hover:shadow-lg"
           >
@@ -115,6 +115,14 @@
           
           <span v-else-if="isFull" class="text-red-600 font-medium">
             活动已满员
+          </span>
+          
+          <span v-else-if="activity.status === 'COMPLETED'" class="text-gray-500 font-medium">
+            活动已结束
+          </span>
+          
+          <span v-else-if="activity.status === 'CANCELLED'" class="text-gray-500 font-medium">
+            活动已取消
           </span>
         </div>
       </div>
@@ -171,12 +179,22 @@ const showRegisterForm = ref(false)
 const registerForm = ref({ userId: '' })
 
 const isFull = computed(() => {
-  return activity.value && activity.value.currentParticipants >= activity.value.maxParticipants
+  if (!activity.value) return false
+  const max = activity.value.maxParticipants || 0
+  return max > 0 && (activity.value.currentParticipants || 0) >= max
 })
 
 const progressPercentage = computed(() => {
   if (!activity.value) return 0
-  return (activity.value.currentParticipants / activity.value.maxParticipants) * 100
+  const max = activity.value.maxParticipants || 0
+  if (max <= 0) return 0
+  return ((activity.value.currentParticipants || 0) / max) * 100
+})
+
+const canRegister = computed(() => {
+  if (!activity.value) return false
+  const status = activity.value.status
+  return (status === 'UPCOMING' || status === 'ONGOING') && !isFull.value
 })
 
 const fetchActivity = async () => {

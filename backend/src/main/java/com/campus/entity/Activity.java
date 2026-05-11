@@ -26,7 +26,7 @@ public class Activity {
     @Column(name = "end_time")
     private LocalDateTime endTime;
     
-    @Column(name = "max_participants")
+    @Column(name = "max_participants", nullable = false)
     private Integer maxParticipants;
     
     @Column(name = "current_participants")

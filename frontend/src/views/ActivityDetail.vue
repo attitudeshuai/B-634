@@ -200,7 +200,8 @@ const handleRegister = async () => {
     registerForm.value.userId = ''
     await fetchActivity() // Refresh data
   } catch (error) {
-    // Error already handled by interceptor
+    // Refresh activity data to show the latest status (e.g. if full)
+    await fetchActivity()
   }
 }
 

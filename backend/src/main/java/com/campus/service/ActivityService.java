@@ -35,6 +35,12 @@ public class ActivityService {
     @Transactional
     public Activity createActivity(Activity activity) {
         log.info("Creating new activity: {}", activity.getTitle());
+        // Ensure current participants starts at 0
+        activity.setCurrentParticipants(0);
+        // Validate max participants is required
+        if (activity.getMaxParticipants() == null || activity.getMaxParticipants() <= 0) {
+            throw new RuntimeException("最大参与人数不能为空且必须大于0");
+        }
         return activityRepository.save(activity);
     }
     
@@ -49,7 +55,13 @@ public class ActivityService {
         activity.setLocation(activityDetails.getLocation());
         activity.setStartTime(activityDetails.getStartTime());
         activity.setEndTime(activityDetails.getEndTime());
-        activity.setMaxParticipants(activityDetails.getMaxParticipants());
+        // Validate max participants - don't allow setting it lower than current participants
+        if (activityDetails.getMaxParticipants() != null && activityDetails.getMaxParticipants() > 0) {
+            if (activityDetails.getMaxParticipants() < activity.getCurrentParticipants()) {
+                throw new RuntimeException("最大参与人数不能小于当前已报名人数");
+            }
+            activity.setMaxParticipants(activityDetails.getMaxParticipants());
+        }
         activity.setStatus(activityDetails.getStatus());
         
         return activityRepository.save(activity);

@@ -142,6 +142,9 @@
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="请输入最大参与人数"
             />
+            <p class="mt-1 text-sm text-gray-500">
+              必填项：设置活动可容纳的最多报名人数，达到上限后用户将无法继续报名。
+            </p>
           </div>
         </div>
         
@@ -215,7 +218,7 @@ const newActivity = ref({
   location: '',
   startTime: '',
   endTime: '',
-  maxParticipants: 100,
+  maxParticipants: '',
   status: 'UPCOMING'
 })
 
@@ -238,6 +241,7 @@ const validateForm = () => {
   if (!newActivity.value.startTime) return '请选择开始时间'
   if (!newActivity.value.endTime) return '请选择结束时间'
   if (!newActivity.value.maxParticipants) return '请输入最大参与人数'
+  if (newActivity.value.maxParticipants <= 0) return '最大参与人数必须大于0'
   return null
 }
 
@@ -258,7 +262,7 @@ const handleCreate = async () => {
       location: '',
       startTime: '',
       endTime: '',
-      maxParticipants: 100,
+      maxParticipants: '',
       status: 'UPCOMING'
     }
     await fetchActivities()

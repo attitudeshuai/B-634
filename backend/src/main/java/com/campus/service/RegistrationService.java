@@ -55,15 +55,17 @@ public class RegistrationService {
             throw new RuntimeException("您已报名过该活动，请勿重复报名");
         }
         
-        // Get user and activity
+        // Get user
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("用户未找到: " + userId));
-        Activity activity = activityRepository.findById(activityId)
+        
+        // Get activity with pessimistic lock to prevent concurrent registration
+        Activity activity = activityRepository.findByIdWithLock(activityId)
             .orElseThrow(() -> new RuntimeException("活动未找到: " + activityId));
         
-        // Check if activity is full
-        long currentCount = registrationRepository.countByActivityIdAndStatus(activityId, RegistrationStatus.ACTIVE);
-        if (currentCount >= activity.getMaxParticipants()) {
+        // Check if activity is full - using activity's currentParticipants (which is maintained consistently)
+        Integer maxParticipants = activity.getMaxParticipants();
+        if (maxParticipants != null && activity.getCurrentParticipants() >= maxParticipants) {
             throw new RuntimeException("该活动名额已满");
         }
         
@@ -76,7 +78,7 @@ public class RegistrationService {
         Registration saved = registrationRepository.save(registration);
         
         // Update activity participant count
-        activity.setCurrentParticipants((int) currentCount + 1);
+        activity.setCurrentParticipants(activity.getCurrentParticipants() + 1);
         activityRepository.save(activity);
         
         log.info("Registration created successfully with id: {}", saved.getId());
@@ -92,8 +94,9 @@ public class RegistrationService {
         registration.setStatus(RegistrationStatus.CANCELLED);
         registrationRepository.save(registration);
         
-        // Update activity participant count
-        Activity activity = registration.getActivity();
+        // Update activity participant count with lock
+        Activity activity = activityRepository.findByIdWithLock(registration.getActivity().getId())
+            .orElseThrow(() -> new RuntimeException("Activity not found"));
         long currentCount = registrationRepository.countByActivityIdAndStatus(
             activity.getId(), RegistrationStatus.ACTIVE);
         activity.setCurrentParticipants((int) currentCount);
